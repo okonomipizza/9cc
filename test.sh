@@ -4,7 +4,7 @@ assert() {
     input="$2"
 
     ./9cc "$input" > tmp.s
-    cc -o tmp tmp.s
+    cc -static -o tmp tmp.s
     ./tmp
     actual="$?"
 
@@ -18,5 +18,6 @@ assert() {
 
 assert 0 0
 assert 42 42
+assert 21 "5+20-4"
 
 echo ok
