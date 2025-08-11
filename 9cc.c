@@ -25,6 +25,22 @@ struct Token {
 // Token currently focused
 Token *token;
 
+char *user_input;
+
+// Reports an error location and exit.
+void error_at(char *loc, char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, " ");
+    fprintf(stderr, "^ ");
+    fprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
 void error(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -46,7 +62,7 @@ bool consume(char op) {
 // Else => report errror
 void expect(char op) {
     if (token->kind != TK_RESERVED || token->str[0] != op)
-        error("Not a '%c'", op);
+        error_at(token->str, "expected '%c'", op);
     token = token->next;
 }
 
@@ -54,7 +70,7 @@ void expect(char op) {
 // Others => report error
 int expect_number() {
     if (token->kind != TK_NUM)
-        error("Not a number");
+        error_at(token->str, "expected a number");
     int val = token->val;
     token = token->next;
     return val;
@@ -74,7 +90,8 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
 }
 
 // Tokenise input string p and return that
-Token *tokenise(char *p) {
+Token *tokenise() {
+    char *p = user_input;
     Token head;
     head.next = NULL;
     Token *cur = &head;
@@ -96,7 +113,7 @@ Token *tokenise(char *p) {
             continue;
         }
 
-        error("Could not tokenisse");
+        error(p, "expected a number");
     }
 
     new_token(TK_EOF, cur, p);
@@ -110,7 +127,8 @@ int main(int argc, char **argv) {
     }
 
     // Tokenise
-    token = tokenise(argv[1]);
+    user_input = argv[1];
+    token = tokenise();
 
     // Output the first half of the assembly
     printf(".intel_syntax noprefix\n");
